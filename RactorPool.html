@@ -236,7 +236,7 @@
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(size:, worker:) {|result| ... } &#x21d2; void </a>
+      <a href="#initialize-instance_method" title="#initialize (instance method)">#<strong>initialize</strong>(size: Etc.nprocessors, worker:) {|result| ... } &#x21d2; void </a>
     
 
     
@@ -292,7 +292,7 @@
     <div class="method_details first">
   <h3 class="signature first" id="initialize-instance_method">
   
-    #<strong>initialize</strong>(size:, worker:) {|result| ... } &#x21d2; <tt>void</tt> 
+    #<strong>initialize</strong>(size: Etc.nprocessors, worker:) {|result| ... } &#x21d2; <tt>void</tt> 
   
 
   
@@ -336,6 +336,8 @@
       
         <span class='type'>(<tt>Integer</tt>)</span>
       
+      
+        <em class="default">(defaults to: <tt>Etc.nprocessors</tt>)</em>
       
       
         &mdash;
@@ -441,7 +443,7 @@
     <td>
       <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 78</span>
 
-<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>size:</span><span class='comma'>,</span> <span class='label'>worker:</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_result_handler'>result_handler</span><span class='rparen'>)</span>
+<span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>size:</span> <span class='const'>Etc</span><span class='period'>.</span><span class='id identifier rubyid_nprocessors'>nprocessors</span><span class='comma'>,</span> <span class='label'>worker:</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_result_handler'>result_handler</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>size must be a positive Integer</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_size'>size</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Integer</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;</span> <span class='int'>0</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>worker must be a lambda Proc</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_worker'>worker</span><span class='period'>.</span><span class='id identifier rubyid_lambda?'>lambda?</span>
 
@@ -687,7 +689,7 @@
 </div>
 
       <div id="footer">
-  Generated on Wed Oct 22 16:38:11 2025 by
+  Generated on Wed Oct 22 16:54:50 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.5.0).
 </div>
