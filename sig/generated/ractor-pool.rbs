@@ -1,0 +1,126 @@
+# Generated from lib/ractor-pool.rb with RBS::Inline
+
+# A thread-safe, lock-free pool of Ractor workers with a coordinator pattern for distributing work.
+#
+# RactorPool manages a fixed number of worker ractors that process work items in parallel.
+# Work is distributed on-demand to idle workers, ensuring efficient utilisation. Results
+# are collected and passed to a result handler running in a separate thread.
+#
+# @example Basic usage
+#   results = []
+#   worker = -> (work) { work * 2 }
+#   pool = RactorPool.new(size: 4, worker: worker) { |result| results << result }
+#
+#   10.times { |index| pool << index }
+#   pool.shutdown
+#
+#   p results #=> [2, 0, 6, 4, 14, 10, 8, 16, 18, 12]
+#
+# @example Without result handler
+#   counter = Atom.new(0)
+#   worker = lambda do |work|
+#     counter.swap { |current_value| current_value + 1 }
+#     work * 2
+#   end
+#   pool = RactorPool.new(size: 4, worker: worker)
+#
+#   10.times { |index| pool << index }
+#   pool.shutdown
+#
+#   p counter.value #=> 10
+#
+# @see https://docs.ruby-lang.org/en/master/ractor_md.html Ractor Guide
+# @see https://docs.ruby-lang.org/en/master/Ractor.html Ractor API
+# @see https://docs.ruby-lang.org/en/master/Ractor/Port.html Ractor::Port API
+# @see https://github.com/joshuay03/atomic-ruby atomic-ruby gem
+class RactorPool
+  class Error < StandardError
+  end
+
+  class EnqueuedWorkAfterShutdownError < Error
+    # @rbs () -> String
+    def message: () -> String
+  end
+
+  SHUTDOWN: ::Symbol
+
+  @collector: Thread?
+
+  @workers: Array[Ractor]
+
+  @coordinator: Ractor
+
+  @result_port: Ractor::Port?
+
+  @state: Atom[Hash[Symbol, bool | Integer]]
+
+  @result_handler: ^(untyped) -> void | nil
+
+  @name: String?
+
+  @worker: ^(untyped) -> untyped
+
+  @size: Integer
+
+  # Creates a new RactorPool with the specified number of workers.
+  #
+  # @param size [Integer] number of worker ractors to create
+  # @param worker [Proc] a shareable lambda that processes each work item
+  # @param name [String, nil] optional name for the pool, used in thread/ractor names
+  # @yieldparam result [Object] the result returned by the worker lambda
+  # @return [void]
+  # @raise [ArgumentError] if size is not a positive integer
+  # @raise [ArgumentError] if worker is not a lambda
+  #
+  # @example With result handler
+  #   pool = RactorPool.new(size: 4, worker: -> { it }) { |result| puts result }
+  #
+  # @example Without result handler
+  #   pool = RactorPool.new(size: 4, worker: -> { it })
+  #
+  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?) ?{ (untyped) -> void } -> void
+  def initialize: (worker: ^(untyped) -> untyped, ?size: Integer, ?name: String?) ?{ (untyped) -> void } -> void
+
+  # Queues a work item to be processed by an available worker.
+  #
+  # @param work [Object] the work item to process
+  # @return [void]
+  # @raise [EnqueuedWorkAfterShutdownError] if the pool has been shut down
+  #
+  # @example
+  #   pool << "http://example.com/page1"
+  #   pool << "http://example.com/page2"
+  #
+  # @rbs (untyped work) -> void
+  def <<: (untyped work) -> void
+
+  # Shuts down the pool gracefully.
+  #
+  # This method:
+  # 1. Prevents new work from being queued
+  # 2. Waits for all in-flight work submissions to complete
+  # 3. Allows all queued work to complete
+  # 4. Waits for all workers to finish
+  # 5. Waits for all results to be processed
+  #
+  # This method is idempotent and can be called multiple times safely.
+  #
+  # @return [void]
+  #
+  # @example
+  #   pool.shutdown
+  #
+  # @rbs () -> void
+  def shutdown: () -> void
+
+  private
+
+  # @rbs () -> Ractor
+  def start_coordinator: () -> Ractor
+
+  # @rbs () -> Array[Ractor]
+  def start_workers: () -> Array[Ractor]
+
+  # @rbs () -> Thread?
+  def start_collector: () -> Thread?
+end

@@ -1,0 +1,5 @@
+# Generated from lib/ractor-pool/version.rb with RBS::Inline
+
+class RactorPool
+  VERSION: ::String
+end
