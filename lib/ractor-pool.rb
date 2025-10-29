@@ -49,6 +49,7 @@ class RactorPool
   end
 
   SHUTDOWN = :shutdown
+  private_constant :SHUTDOWN
 
   # @rbs @size: Integer
   # @rbs @worker: ^(untyped) -> untyped
