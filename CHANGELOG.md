@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.1.2] - 2025-10-29
+
 - Fix `@coordinator` RBS type to allow nil
 
 ## [0.1.1] - 2025-10-29
