@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Fix `@coordinator` RBS type to allow nil
+
 ## [0.1.1] - 2025-10-29
 
 - Make `RactorPool::SHUTDOWN` private

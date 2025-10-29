@@ -48,7 +48,7 @@ class RactorPool
 
   @workers: Array[Ractor]
 
-  @coordinator: Ractor
+  @coordinator: Ractor?
 
   @result_port: Ractor::Port?
 

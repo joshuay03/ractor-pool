@@ -57,7 +57,7 @@ class RactorPool
   # @rbs @result_handler: (^(untyped) -> void | nil)
   # @rbs @state: Atom[Hash[Symbol, bool | Integer]]
   # @rbs @result_port: Ractor::Port?
-  # @rbs @coordinator: Ractor
+  # @rbs @coordinator: Ractor?
   # @rbs @workers: Array[Ractor]
   # @rbs @collector: Thread?
 
