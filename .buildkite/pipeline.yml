@@ -1,14 +1,13 @@
 steps:
   - label: ":ruby: Ruby master-dev"
+    image: "rubylang/ruby:master-dev"
     commands:
       - apt-get update && apt-get install -y libyaml-dev
       - bundle install
       - bundle exec rake
-    plugins:
-      - docker#v5.13.0:
-          image: "rubylang/ruby:master-dev"
 
   # - label: ":ruby: Ruby {{matrix.ruby}}"
+  #   image: "ruby:{{matrix.ruby}}"
   #   commands:
   #     - bundle install
   #     - bundle exec rake
@@ -16,6 +15,3 @@ steps:
   #     setup:
   #       ruby:
   #         - 3.5.0
-  #   plugins:
-  #     - docker#v5.13.0:
-  #         image: "ruby:{{matrix.ruby}}"
