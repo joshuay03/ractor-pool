@@ -24,7 +24,7 @@ gem install ractor-pool
 Calculating Fibonacci numbers in parallel:
 
 ```ruby
-fib_worker = lambda do |index|
+fib_worker = proc do |index|
   first, second = 0, 1
   index.times { first, second = second, first + second }
   [index, first]

@@ -24,7 +24,7 @@ Warning.ignore(/Ractor is experimental/, __FILE__)
 #
 # @example Without result handler
 #   counter = Atom.new(0)
-#   worker = lambda do |work|
+#   worker = proc do |work|
 #     counter.swap { |current_value| current_value + 1 }
 #     work * 2
 #   end
@@ -64,12 +64,12 @@ class RactorPool
   # Creates a new RactorPool with the specified number of workers.
   #
   # @param size [Integer] number of worker ractors to create
-  # @param worker [Proc] a shareable lambda that processes each work item
+  # @param worker [Proc] a shareable proc that processes each work item
   # @param name [String, nil] optional name for the pool, used in thread/ractor names
-  # @yieldparam result [Object] the result returned by the worker lambda
+  # @yieldparam result [Object] the result returned by the worker proc
   # @return [void]
   # @raise [ArgumentError] if size is not a positive integer
-  # @raise [ArgumentError] if worker is not a lambda
+  # @raise [ArgumentError] if worker is not a proc
   #
   # @example With result handler
   #   pool = RactorPool.new(size: 4, worker: -> { it }) { |result| puts result }
@@ -80,10 +80,10 @@ class RactorPool
   # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?) ?{ (untyped) -> void } -> void
   def initialize(size: Etc.nprocessors, worker:, name: nil, &result_handler)
     raise ArgumentError, "size must be a positive Integer" unless size.is_a?(Integer) && size > 0
-    raise ArgumentError, "worker must be a lambda Proc" unless worker.lambda?
+    raise ArgumentError, "worker must be a Proc" unless worker.is_a?(Proc)
 
     @size = size
-    @worker = Ractor.shareable_lambda(&worker)
+    @worker = Ractor.shareable_proc(&worker)
     @name = name
     @result_handler = result_handler
 

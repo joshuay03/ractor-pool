@@ -18,7 +18,7 @@
 #
 # @example Without result handler
 #   counter = Atom.new(0)
-#   worker = lambda do |work|
+#   worker = proc do |work|
 #     counter.swap { |current_value| current_value + 1 }
 #     work * 2
 #   end
@@ -65,12 +65,12 @@ class RactorPool
   # Creates a new RactorPool with the specified number of workers.
   #
   # @param size [Integer] number of worker ractors to create
-  # @param worker [Proc] a shareable lambda that processes each work item
+  # @param worker [Proc] a shareable proc that processes each work item
   # @param name [String, nil] optional name for the pool, used in thread/ractor names
-  # @yieldparam result [Object] the result returned by the worker lambda
+  # @yieldparam result [Object] the result returned by the worker proc
   # @return [void]
   # @raise [ArgumentError] if size is not a positive integer
-  # @raise [ArgumentError] if worker is not a lambda
+  # @raise [ArgumentError] if worker is not a proc
   #
   # @example With result handler
   #   pool = RactorPool.new(size: 4, worker: -> { it }) { |result| puts result }

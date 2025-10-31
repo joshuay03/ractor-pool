@@ -54,7 +54,7 @@ class TestRactorPool < Minitest::Test
 
   def test_processes_work_items_without_result_handler
     counter = Atom.new(0)
-    worker = lambda do |work|
+    worker = proc do |work|
       counter.swap { |value| value + 1 }
       work * 2
     end
@@ -68,7 +68,7 @@ class TestRactorPool < Minitest::Test
 
   def test_completes_queued_work_items_before_shutdown
     results = []
-    worker = lambda do |work|
+    worker = proc do |work|
       sleep(0.1)
       work * 2
     end
@@ -83,7 +83,7 @@ class TestRactorPool < Minitest::Test
 
   def test_continues_after_worker_exception
     results = []
-    worker = lambda do |work|
+    worker = proc do |work|
       raise StandardError, "expected rescued boom" if work == 5
       work * 2
     end
