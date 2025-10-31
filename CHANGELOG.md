@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.1.3] - 2025-10-31
+
 - Allow `:worker` to be a Proc, not just a lambda
 
 ## [0.1.2] - 2025-10-29
