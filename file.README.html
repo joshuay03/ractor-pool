@@ -80,7 +80,7 @@
 
 <p>Calculating Fibonacci numbers in parallel:</p>
 
-<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_fib_worker'>fib_worker</span> <span class='op'>=</span> <span class='id identifier rubyid_lambda'>lambda</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_index'>index</span><span class='op'>|</span>
+<pre class="code ruby"><code class="ruby"><span class='id identifier rubyid_fib_worker'>fib_worker</span> <span class='op'>=</span> <span class='id identifier rubyid_proc'>proc</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_index'>index</span><span class='op'>|</span>
   <span class='id identifier rubyid_first'>first</span><span class='comma'>,</span> <span class='id identifier rubyid_second'>second</span> <span class='op'>=</span> <span class='int'>0</span><span class='comma'>,</span> <span class='int'>1</span>
   <span class='id identifier rubyid_index'>index</span><span class='period'>.</span><span class='id identifier rubyid_times'>times</span> <span class='lbrace'>{</span> <span class='id identifier rubyid_first'>first</span><span class='comma'>,</span> <span class='id identifier rubyid_second'>second</span> <span class='op'>=</span> <span class='id identifier rubyid_second'>second</span><span class='comma'>,</span> <span class='id identifier rubyid_first'>first</span> <span class='op'>+</span> <span class='id identifier rubyid_second'>second</span> <span class='rbrace'>}</span>
   <span class='lbracket'>[</span><span class='id identifier rubyid_index'>index</span><span class='comma'>,</span> <span class='id identifier rubyid_first'>first</span><span class='rbracket'>]</span>
@@ -127,7 +127,7 @@
 </div></div>
 
       <div id="footer">
-  Generated on Thu Oct 30 02:08:20 2025 by
+  Generated on Fri Oct 31 11:14:22 2025 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.37 (ruby-3.5.0).
 </div>
