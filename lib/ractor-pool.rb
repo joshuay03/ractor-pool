@@ -72,10 +72,10 @@ class RactorPool
   # @raise [ArgumentError] if worker is not a proc
   #
   # @example With result handler
-  #   pool = RactorPool.new(size: 4, worker: -> { it }) { |result| puts result }
+  #   pool = RactorPool.new(size: 4, worker: proc { it }) { |result| puts result }
   #
   # @example Without result handler
-  #   pool = RactorPool.new(size: 4, worker: -> { it })
+  #   pool = RactorPool.new(size: 4, worker: proc { it })
   #
   # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?) ?{ (untyped) -> void } -> void
   def initialize(size: Etc.nprocessors, worker:, name: nil, &result_handler)

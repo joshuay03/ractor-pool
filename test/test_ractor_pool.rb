@@ -8,7 +8,7 @@ class TestRactorPool < Minitest::Test
   end
 
   def test_init_default_size
-    pool = RactorPool.new(worker: -> { }, name: self.class.name) { }
+    pool = RactorPool.new(worker: proc { }, name: self.class.name) { }
     Thread.pass
     assert_equal 1 + 1 + Etc.nprocessors, Ractor.count # main ractor, coordinator ractor, worker ractors
     main_thread = Thread.current
@@ -19,7 +19,7 @@ class TestRactorPool < Minitest::Test
   end
 
   def test_init_size_one
-    pool = RactorPool.new(size: 1, worker: -> { }, name: self.class.name) { }
+    pool = RactorPool.new(size: 1, worker: proc { }, name: self.class.name) { }
     Thread.pass
     assert_equal 1 + 1, Ractor.count # main ractor, worker ractor
     main_thread = Thread.current
@@ -30,7 +30,7 @@ class TestRactorPool < Minitest::Test
   end
 
   def test_init_size_greater_than_one
-    pool = RactorPool.new(size: 2, worker: -> { }, name: self.class.name) { }
+    pool = RactorPool.new(size: 2, worker: proc { }, name: self.class.name) { }
     Thread.pass
     assert_equal 1 + 1 + 2, Ractor.count # main ractor, coordinator ractor, worker ractors
     main_thread = Thread.current
