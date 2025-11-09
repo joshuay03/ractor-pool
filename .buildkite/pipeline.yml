@@ -1,17 +1,13 @@
 steps:
-  - label: ":ruby: Ruby master-dev"
+  # - label: ":ruby: Ruby 4.0"
+  #   image: "ruby:4.0"
+  #   commands:
+  #     - bundle install
+  #     - bundle exec rake
+
+  - label: ":ruby: Ruby head"
     image: "rubylang/ruby:master-dev"
     commands:
       - apt-get update && apt-get install -y libyaml-dev
       - bundle install
       - bundle exec rake
-
-  # - label: ":ruby: Ruby {{matrix.ruby}}"
-  #   image: "ruby:{{matrix.ruby}}"
-  #   commands:
-  #     - bundle install
-  #     - bundle exec rake
-  #   matrix:
-  #     setup:
-  #       ruby:
-  #         - 3.5.0

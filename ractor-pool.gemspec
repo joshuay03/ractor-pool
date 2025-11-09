@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "A thread-safe, lock-free pool of Ractor workers with a coordinator pattern for distributing work"
   spec.homepage = "https://github.com/joshuay03/ractor-pool"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.5.0.dev"
+  spec.required_ruby_version = ">= 4.0.0.dev"
 
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
