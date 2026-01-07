@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Require Ruby >= 4.0.0
+
 ## [0.1.4] - 2025-11-10
 
 - Replace Ruby 3.5 references with 4.0
