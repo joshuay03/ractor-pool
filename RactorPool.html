@@ -491,7 +491,7 @@ are collected and passed to a result handler running in a separate thread.</p>
       
       
         &mdash;
-        <div class='inline'><p>optional shareable proc called with the raised exception when a worker raises</p></div>
+        <div class='inline'><p>optional shareable proc called with the raised exception when a worker raises; defaults to logging to stderr</p></div>
       
     </li>
   
@@ -1175,7 +1175,7 @@ are collected and passed to a result handler running in a separate thread.</p>
 
           <span class='id identifier rubyid_result_port'>result_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
         <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_error'>error</span>
-          <span class='id identifier rubyid_on_error'>on_error</span><span class='op'>&amp;.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_error'>error</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_on_error'>on_error</span> <span class='op'>?</span> <span class='id identifier rubyid_on_error'>on_error</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_error'>error</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_warn'>warn</span><span class='lparen'>(</span><span class='id identifier rubyid_error'>error</span><span class='period'>.</span><span class='id identifier rubyid_full_message'>full_message</span><span class='rparen'>)</span>
         <span class='kw'>end</span>
       <span class='kw'>end</span>
     <span class='kw'>end</span>
@@ -1191,7 +1191,7 @@ are collected and passed to a result handler running in a separate thread.</p>
 </div>
 
       <div id="footer">
-  Generated on Fri May  8 11:34:20 2026 by
+  Generated on Fri May  8 11:36:18 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.43 (ruby-4.1.0).
 </div>
