@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Update `Ractor` warning suppression regex
+
 ## [0.2.0] - 2026-01-07
 
 - Require Ruby >= 4.0.0

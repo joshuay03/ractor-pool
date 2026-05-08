@@ -4,7 +4,7 @@
 require "warning"
 require "atomic-ruby/atom"
 
-Warning.ignore(/Ractor is experimental/, __FILE__)
+Warning.ignore(/Ractor API is experimental/, __FILE__)
 
 # A thread-safe, lock-free pool of Ractor workers with a coordinator pattern for distributing work.
 #
