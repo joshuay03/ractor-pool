@@ -46,15 +46,21 @@ class RactorPool
 
   @collector: Thread?
 
+  @error_collector: Thread?
+
   @workers: Array[Ractor]
 
   @coordinator: Ractor?
+
+  @error_port: Ractor::Port?
 
   @result_port: Ractor::Port?
 
   @state: Atom[Hash[Symbol, bool | Integer]]
 
   @result_handler: ^(untyped) -> void | nil
+
+  @on_error: ^(Exception) -> void | nil
 
   @name: String?
 
@@ -67,10 +73,12 @@ class RactorPool
   # @param size [Integer] number of worker ractors to create
   # @param worker [Proc] a shareable proc that processes each work item
   # @param name [String, nil] optional name for the pool, used in thread/ractor names
+  # @param on_error [Proc, nil] optional shareable proc called with the raised exception when a worker raises
   # @yieldparam result [Object] the result returned by the worker proc
   # @return [void]
   # @raise [ArgumentError] if size is not a positive integer
   # @raise [ArgumentError] if worker is not a proc
+  # @raise [ArgumentError] if on_error is given but is not a proc
   #
   # @example With result handler
   #   pool = RactorPool.new(size: 4, worker: proc { it }) { |result| puts result }
@@ -78,8 +86,13 @@ class RactorPool
   # @example Without result handler
   #   pool = RactorPool.new(size: 4, worker: proc { it })
   #
-  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?) ?{ (untyped) -> void } -> void
-  def initialize: (worker: ^(untyped) -> untyped, ?size: Integer, ?name: String?) ?{ (untyped) -> void } -> void
+  # @example With error handler
+  #   error_count = Atom.new(0)
+  #   on_error = proc { error_count.swap { |count| count + 1 } }
+  #   pool = RactorPool.new(size: 4, worker: proc { raise }, on_error: on_error)
+  #
+  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?, ?on_error: (^(Exception) -> void | nil)) ?{ (untyped) -> void } -> void
+  def initialize: (worker: ^(untyped) -> untyped, ?size: Integer, ?name: String?, ?on_error: ^(Exception) -> void | nil) ?{ (untyped) -> void } -> void
 
   # Queues a work item to be processed by an available worker.
   #
@@ -101,7 +114,7 @@ class RactorPool
   # 2. Waits for all in-flight work submissions to complete
   # 3. Allows all queued work to complete
   # 4. Waits for all workers to finish
-  # 5. Waits for all results to be processed
+  # 5. Waits for all results and errors to be processed
   #
   # This method is idempotent and can be called multiple times safely.
   #
@@ -120,6 +133,9 @@ class RactorPool
 
   # @rbs () -> Array[Ractor]
   def start_workers: () -> Array[Ractor]
+
+  # @rbs () -> Thread?
+  def start_error_collector: () -> Thread?
 
   # @rbs () -> Thread?
   def start_collector: () -> Thread?

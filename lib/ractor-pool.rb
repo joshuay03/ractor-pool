@@ -54,11 +54,14 @@ class RactorPool
   # @rbs @size: Integer
   # @rbs @worker: ^(untyped) -> untyped
   # @rbs @name: String?
+  # @rbs @on_error: (^(Exception) -> void | nil)
   # @rbs @result_handler: (^(untyped) -> void | nil)
   # @rbs @state: Atom[Hash[Symbol, bool | Integer]]
   # @rbs @result_port: Ractor::Port?
+  # @rbs @error_port: Ractor::Port?
   # @rbs @coordinator: Ractor?
   # @rbs @workers: Array[Ractor]
+  # @rbs @error_collector: Thread?
   # @rbs @collector: Thread?
 
   # Creates a new RactorPool with the specified number of workers.
@@ -66,10 +69,12 @@ class RactorPool
   # @param size [Integer] number of worker ractors to create
   # @param worker [Proc] a shareable proc that processes each work item
   # @param name [String, nil] optional name for the pool, used in thread/ractor names
+  # @param on_error [Proc, nil] optional shareable proc called with the raised exception when a worker raises
   # @yieldparam result [Object] the result returned by the worker proc
   # @return [void]
   # @raise [ArgumentError] if size is not a positive integer
   # @raise [ArgumentError] if worker is not a proc
+  # @raise [ArgumentError] if on_error is given but is not a proc
   #
   # @example With result handler
   #   pool = RactorPool.new(size: 4, worker: proc { it }) { |result| puts result }
@@ -77,21 +82,30 @@ class RactorPool
   # @example Without result handler
   #   pool = RactorPool.new(size: 4, worker: proc { it })
   #
-  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?) ?{ (untyped) -> void } -> void
-  def initialize(size: Etc.nprocessors, worker:, name: nil, &result_handler)
+  # @example With error handler
+  #   error_count = Atom.new(0)
+  #   on_error = proc { error_count.swap { |count| count + 1 } }
+  #   pool = RactorPool.new(size: 4, worker: proc { raise }, on_error: on_error)
+  #
+  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?, ?on_error: (^(Exception) -> void | nil)) ?{ (untyped) -> void } -> void
+  def initialize(size: Etc.nprocessors, worker:, name: nil, on_error: nil, &result_handler)
     raise ArgumentError, "size must be a positive Integer" unless size.is_a?(Integer) && size > 0
     raise ArgumentError, "worker must be a Proc" unless worker.is_a?(Proc)
+    raise ArgumentError, "on_error must be a Proc" if on_error && !on_error.is_a?(Proc)
 
     @size = size
     @worker = Ractor.shareable_proc(&worker)
     @name = name
+    @on_error = Ractor.shareable_proc(&on_error) if on_error
     @result_handler = result_handler
 
     @state = Atom.new(in_flight: 0, shutdown: false)
 
     @result_port = Ractor::Port.new if result_handler
+    @error_port  = Ractor::Port.new unless on_error
     @coordinator = start_coordinator if size > 1
     @workers = start_workers
+    @error_collector = start_error_collector
     @collector = start_collector
   end
 
@@ -132,7 +146,7 @@ class RactorPool
   # 2. Waits for all in-flight work submissions to complete
   # 3. Allows all queued work to complete
   # 4. Waits for all workers to finish
-  # 5. Waits for all results to be processed
+  # 5. Waits for all results and errors to be processed
   #
   # This method is idempotent and can be called multiple times safely.
   #
@@ -160,6 +174,8 @@ class RactorPool
       (@workers.first.send(SHUTDOWN, move: true) && @result_port&.send(SHUTDOWN, move: true))
     @workers.each(&:join)
     @coordinator&.join
+    @error_port&.send(SHUTDOWN, move: true)
+    @error_collector&.join
     @collector&.join
   end
 
@@ -225,7 +241,7 @@ class RactorPool
       ractor_name = String.new("#{self.class.name} ractor #{index}")
       ractor_name << " for #{@name}" if @name
 
-      Ractor.new(@worker, @coordinator, @result_port, name: ractor_name) do |worker, coordinator, result_port|
+      Ractor.new(@worker, @on_error, @error_port, @coordinator, @result_port, name: ractor_name) do |worker, on_error, error_port, coordinator, result_port|
         loop do
           coordinator&.send(Ractor.current, move: true)
 
@@ -237,11 +253,28 @@ class RactorPool
 
             result_port&.send(result, move: true)
           rescue => error
-            puts "#{Ractor.current.name} rescued:"
-            puts "#{error.class}: #{error.message}"
-            puts error.backtrace.join("\n")
+            on_error ? on_error.call(error) : error_port.send(error.full_message, move: true)
           end
         end
+      end
+    end
+  end
+
+  # @rbs () -> Thread?
+  def start_error_collector
+    return if @on_error
+
+    thread_name = String.new("#{self.class.name} error collector thread")
+    thread_name << " for #{@name}" if @name
+
+    Thread.new(@error_port, thread_name) do |error_port, name|
+      Thread.current.name = name
+
+      loop do
+        message = error_port.receive
+        break if message == SHUTDOWN
+
+        warn message
       end
     end
   end

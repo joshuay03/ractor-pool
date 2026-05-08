@@ -13,8 +13,11 @@ class TestRactorPool < Minitest::Test
     assert_equal 1 + 1 + Etc.nprocessors, Ractor.count # main ractor, coordinator ractor, worker ractors
     main_thread = Thread.current
     threads = Thread.list.select { it == main_thread || it.name }
-    assert_equal 1 + 1, threads.size # main thread, collector thread
-    assert_equal ["RactorPool collector thread for #{self.class.name}"], threads.select(&:name).map(&:name).sort
+    assert_equal 1 + 2, threads.size # main thread, error collector thread, collector thread
+    assert_equal [
+      "RactorPool collector thread for #{self.class.name}",
+      "RactorPool error collector thread for #{self.class.name}"
+    ], threads.select(&:name).map(&:name).sort
     pool.shutdown
   end
 
@@ -24,8 +27,11 @@ class TestRactorPool < Minitest::Test
     assert_equal 1 + 1, Ractor.count # main ractor, worker ractor
     main_thread = Thread.current
     threads = Thread.list.select { it == main_thread || it.name }
-    assert_equal 1 + 1, threads.size # main thread, collector thread
-    assert_equal ["RactorPool collector thread for #{self.class.name}"], threads.select(&:name).map(&:name).sort
+    assert_equal 1 + 2, threads.size # main thread, error collector thread, collector thread
+    assert_equal [
+      "RactorPool collector thread for #{self.class.name}",
+      "RactorPool error collector thread for #{self.class.name}"
+    ], threads.select(&:name).map(&:name).sort
     pool.shutdown
   end
 
@@ -35,8 +41,11 @@ class TestRactorPool < Minitest::Test
     assert_equal 1 + 1 + 2, Ractor.count # main ractor, coordinator ractor, worker ractors
     main_thread = Thread.current
     threads = Thread.list.select { it == main_thread || it.name }
-    assert_equal 1 + 1, threads.size # main thread, collector thread
-    assert_equal ["RactorPool collector thread for #{self.class.name}"], threads.select(&:name).map(&:name).sort
+    assert_equal 1 + 2, threads.size # main thread, error collector thread, collector thread
+    assert_equal [
+      "RactorPool collector thread for #{self.class.name}",
+      "RactorPool error collector thread for #{self.class.name}"
+    ], threads.select(&:name).map(&:name).sort
     pool.shutdown
   end
 
@@ -87,13 +96,46 @@ class TestRactorPool < Minitest::Test
       raise StandardError, "expected rescued boom" if work == 5
       work * 2
     end
-    pool = RactorPool.new(worker: worker, name: self.class.name) { |result| results << result }
+    pool = RactorPool.new(worker: worker, on_error: proc {}, name: self.class.name) { |result| results << result }
 
     10.times { |index| pool << index }
     pool.shutdown
 
     assert_equal 9, results.size
     assert_equal [0, 2, 4, 6, 8, 12, 14, 16, 18], results.sort
+  end
+
+  def test_warns_by_default_when_worker_raises
+    results = []
+    worker = proc do |work|
+      raise StandardError, "expected boom" if work == 5
+      work * 2
+    end
+
+    _stdout, stderr = capture_io do
+      pool = RactorPool.new(worker: worker, name: self.class.name) { |result| results << result }
+      10.times { |index| pool << index }
+      pool.shutdown
+    end
+
+    assert_equal 9, results.size
+    assert_equal [0, 2, 4, 6, 8, 12, 14, 16, 18], results.sort
+    assert_match "StandardError", stderr
+  end
+
+  def test_calls_on_error_when_worker_raises
+    error_count = Atom.new(0)
+    on_error = proc { error_count.swap { |count| count + 1 } }
+    worker = proc do |work|
+      raise StandardError, "expected boom" if work == 5
+      work * 2
+    end
+    pool = RactorPool.new(worker: worker, on_error: on_error, name: self.class.name)
+
+    10.times { |index| pool << index }
+    pool.shutdown
+
+    assert_equal 1, error_count.value
   end
 
   def test_handles_different_data_types

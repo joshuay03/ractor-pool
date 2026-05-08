@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Add `on_error:` worker error callback
 - Update `Ractor` warning suppression regex
 
 ## [0.2.0] - 2026-01-07
