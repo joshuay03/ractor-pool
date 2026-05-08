@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Replace state atom with separate `@in_flight` and `@shutdown` atoms
 - Add `on_error:` worker error callback
 - Update `Ractor` warning suppression regex
 

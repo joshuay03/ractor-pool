@@ -56,7 +56,8 @@ class RactorPool
   # @rbs @name: String?
   # @rbs @on_error: (^(Exception) -> void | nil)
   # @rbs @result_handler: (^(untyped) -> void | nil)
-  # @rbs @state: Atom[Hash[Symbol, bool | Integer]]
+  # @rbs @in_flight: Atom[Integer]
+  # @rbs @shutdown: Atom[bool]
   # @rbs @result_port: Ractor::Port?
   # @rbs @error_port: Ractor::Port?
   # @rbs @coordinator: Ractor?
@@ -99,7 +100,8 @@ class RactorPool
     @on_error = Ractor.shareable_proc(&on_error) if on_error
     @result_handler = result_handler
 
-    @state = Atom.new(in_flight: 0, shutdown: false)
+    @in_flight = Atom.new(0)
+    @shutdown  = Atom.new(false)
 
     @result_port = Ractor::Port.new if result_handler
     @error_port  = Ractor::Port.new unless on_error
@@ -121,21 +123,19 @@ class RactorPool
   #
   # @rbs (untyped work) -> void
   def <<(work)
-    state = @state.swap do |current_state|
-      if current_state[:shutdown]
-        current_state
-      else
-        current_state.merge(in_flight: current_state[:in_flight] + 1)
-      end
+    raise EnqueuedWorkAfterShutdownError if @shutdown.value
+
+    @in_flight.swap { |count| count + 1 }
+
+    if @shutdown.value
+      @in_flight.swap { |count| count - 1 }
+      raise EnqueuedWorkAfterShutdownError
     end
-    raise EnqueuedWorkAfterShutdownError if state[:shutdown]
 
     begin
       (@coordinator || @workers.first).send(work, move: true)
     ensure
-      @state.swap do |current_state|
-        current_state.merge(in_flight: current_state[:in_flight] - 1)
-      end
+      @in_flight.swap { |count| count - 1 }
     end
   end
 
@@ -158,17 +158,17 @@ class RactorPool
   # @rbs () -> void
   def shutdown
     already_shutdown = false
-    @state.swap do |current_state|
-      if current_state[:shutdown]
+    @shutdown.swap do |current|
+      if current
         already_shutdown = true
-        current_state
+        current
       else
-        current_state.merge(shutdown: true)
+        true
       end
     end
     return if already_shutdown
 
-    Thread.pass until @state.value[:in_flight] == 0
+    Thread.pass until @in_flight.value.zero?
 
     @coordinator&.send(SHUTDOWN, move: true) ||
       (@workers.first.send(SHUTDOWN, move: true) && @result_port&.send(SHUTDOWN, move: true))

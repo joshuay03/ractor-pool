@@ -56,7 +56,9 @@ class RactorPool
 
   @result_port: Ractor::Port?
 
-  @state: Atom[Hash[Symbol, bool | Integer]]
+  @shutdown: Atom[bool]
+
+  @in_flight: Atom[Integer]
 
   @result_handler: ^(untyped) -> void | nil
 
