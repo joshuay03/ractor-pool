@@ -3,5 +3,5 @@
 /doc/
 /tmp/
 
-Gemfile.lock
 *.gem
+Gemfile.lock
