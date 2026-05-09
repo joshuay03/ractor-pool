@@ -6,6 +6,7 @@ steps:
       - bundle exec rake
 
   - label: ":ruby: Ruby head"
+    soft_fail: true
     image: "rubylang/ruby:master-dev"
     commands:
       - apt-get update && apt-get install -y libyaml-dev
