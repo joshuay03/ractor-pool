@@ -62,8 +62,8 @@ class RactorPool
   # @rbs @error_port: Ractor::Port?
   # @rbs @coordinator: Ractor?
   # @rbs @workers: Array[Ractor]
-  # @rbs @error_collector: Thread?
   # @rbs @collector: Thread?
+  # @rbs @error_collector: Thread?
 
   # Creates a new RactorPool with the specified number of workers.
   #
@@ -107,8 +107,8 @@ class RactorPool
     @error_port  = Ractor::Port.new unless on_error
     @coordinator = start_coordinator if size > 1
     @workers = start_workers
-    @error_collector = start_error_collector
     @collector = start_collector
+    @error_collector = start_error_collector
   end
 
   # Queues a work item to be processed by an available worker.
@@ -261,25 +261,6 @@ class RactorPool
   end
 
   # @rbs () -> Thread?
-  def start_error_collector
-    return if @on_error
-
-    thread_name = String.new("#{self.class.name} error collector thread")
-    thread_name << " for #{@name}" if @name
-
-    Thread.new(@error_port, thread_name) do |error_port, name|
-      Thread.current.name = name
-
-      loop do
-        message = error_port.receive
-        break if message == SHUTDOWN
-
-        warn message
-      end
-    end
-  end
-
-  # @rbs () -> Thread?
   def start_collector
     return unless @result_handler
 
@@ -294,6 +275,25 @@ class RactorPool
         break if result == SHUTDOWN
 
         result_handler.call(result)
+      end
+    end
+  end
+
+  # @rbs () -> Thread?
+  def start_error_collector
+    return if @on_error
+
+    thread_name = String.new("#{self.class.name} error collector thread")
+    thread_name << " for #{@name}" if @name
+
+    Thread.new(@error_port, thread_name) do |error_port, name|
+      Thread.current.name = name
+
+      loop do
+        message = error_port.receive
+        break if message == SHUTDOWN
+
+        warn message
       end
     end
   end

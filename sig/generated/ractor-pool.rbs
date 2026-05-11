@@ -44,9 +44,9 @@ class RactorPool
 
   SHUTDOWN: ::Symbol
 
-  @collector: Thread?
-
   @error_collector: Thread?
+
+  @collector: Thread?
 
   @workers: Array[Ractor]
 
@@ -137,8 +137,8 @@ class RactorPool
   def start_workers: () -> Array[Ractor]
 
   # @rbs () -> Thread?
-  def start_error_collector: () -> Thread?
+  def start_collector: () -> Thread?
 
   # @rbs () -> Thread?
-  def start_collector: () -> Thread?
+  def start_error_collector: () -> Thread?
 end
