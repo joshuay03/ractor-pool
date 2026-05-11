@@ -29,7 +29,7 @@
 #
 #   p counter.value #=> 10
 #
-# @see https://docs.ruby-lang.org/en/master/ractor_md.html Ractor Guide
+# @see https://docs.ruby-lang.org/en/master/language/ractor_md.html Ractor Guide
 # @see https://docs.ruby-lang.org/en/master/Ractor.html Ractor API
 # @see https://docs.ruby-lang.org/en/master/Ractor/Port.html Ractor::Port API
 # @see https://github.com/joshuay03/atomic-ruby atomic-ruby gem
