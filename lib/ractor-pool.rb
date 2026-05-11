@@ -170,10 +170,15 @@ class RactorPool
 
     Thread.pass until @in_flight.value.zero?
 
-    @coordinator&.send(SHUTDOWN, move: true) ||
-      (@workers.first.send(SHUTDOWN, move: true) && @result_port&.send(SHUTDOWN, move: true))
-    @workers.each(&:join)
-    @coordinator&.join
+    if @coordinator
+      @coordinator.send(SHUTDOWN, move: true)
+      @workers.each(&:join)
+      @coordinator.join
+    else
+      @workers.first.send(SHUTDOWN, move: true)
+      @workers.each(&:join)
+      @result_port&.send(SHUTDOWN, move: true)
+    end
     @error_port&.send(SHUTDOWN, move: true)
     @error_collector&.join
     @collector&.join

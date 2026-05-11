@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Fix `result_port` race condition in single-worker shutdown
+
 ## [0.3.0] - 2026-05-08
 
 - Replace state atom with separate `@in_flight` and `@shutdown` atoms
