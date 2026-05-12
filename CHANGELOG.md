@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-12
+
 - Fix `result_port` race condition in single-worker shutdown
 
 ## [0.3.0] - 2026-05-08
