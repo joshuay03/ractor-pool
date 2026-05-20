@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Joshua Young"]
   spec.email = ["djry1999@gmail.com"]
 
-  spec.summary = "A thread-safe, lock-free pool of Ractor workers with a coordinator pattern for distributing work"
+  spec.summary = "A thread-safe, lock-free pool of Ractor workers with coordinator or round-robin dispatch for distributing work"
   spec.homepage = "https://github.com/joshuay03/ractor-pool"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 4.0.0"

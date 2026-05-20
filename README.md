@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/gem/v/ractor-pool)
 ![Build](https://badge.buildkite.com/f5f08eba1c869dee6e9e87dd66b241059d8fbefaaed6c56d86.svg)
 
-A thread-safe, lock-free pool of Ractor workers with a coordinator pattern for distributing work.
+A thread-safe, lock-free pool of Ractor workers with coordinator or round-robin dispatch for distributing work.
 
 ## Installation
 

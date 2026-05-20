@@ -6,11 +6,16 @@ require "atomic-ruby/atom"
 
 Warning.ignore(/Ractor API is experimental/, __FILE__)
 
-# A thread-safe, lock-free pool of Ractor workers with a coordinator pattern for distributing work.
+# A thread-safe, lock-free pool of Ractor workers with coordinator or round-robin dispatch for distributing work.
 #
 # RactorPool manages a fixed number of worker ractors that process work items in parallel.
-# Work is distributed on-demand to idle workers, ensuring efficient utilisation. Results
-# are collected and passed to a result handler running in a separate thread.
+# The +:coordinator+ strategy (the default) routes each work item to whichever worker is
+# currently idle via a dedicated coordinator Ractor, so a slow item on one worker does not
+# block faster items from being picked up by other workers. Use it when work items have
+# variable cost. The +:round_robin+ strategy dispatches work to workers in turn, so a slow
+# item on one worker queues the next item destined for that worker behind it, even if other
+# workers are idle. Use it when work items have uniform cost. Results are collected and
+# passed to a result handler running in a separate thread.
 #
 # @example Basic usage
 #   results = []
@@ -48,16 +53,21 @@ class RactorPool
     def message = "cannot queue work after shutdown"
   end
 
+  STRATEGIES = %i[coordinator round_robin].freeze
+  private_constant :STRATEGIES
+
   SHUTDOWN = :shutdown
   private_constant :SHUTDOWN
 
   # @rbs @size: Integer
   # @rbs @worker: ^(untyped) -> untyped
+  # @rbs @strategy: Symbol
   # @rbs @name: String?
   # @rbs @on_error: (^(Exception) -> void | nil)
   # @rbs @result_handler: (^(untyped) -> void | nil)
   # @rbs @in_flight: Atom[Integer]
   # @rbs @shutdown: Atom[bool]
+  # @rbs @next_worker_index: Atom[Integer]?
   # @rbs @result_port: Ractor::Port?
   # @rbs @error_port: Ractor::Port?
   # @rbs @coordinator: Ractor?
@@ -69,12 +79,14 @@ class RactorPool
   #
   # @param size [Integer] number of worker ractors to create
   # @param worker [Proc] a shareable proc that processes each work item
+  # @param strategy [Symbol] dispatch strategy, either +:coordinator+ (the default) or +:round_robin+
   # @param name [String, nil] optional name for the pool, used in thread/ractor names
   # @param on_error [Proc, nil] optional shareable proc called with the raised exception when a worker raises
   # @yieldparam result [Object] the result returned by the worker proc
   # @return [void]
   # @raise [ArgumentError] if size is not a positive integer
   # @raise [ArgumentError] if worker is not a proc
+  # @raise [ArgumentError] if strategy is not +:coordinator+ or +:round_robin+
   # @raise [ArgumentError] if on_error is given but is not a proc
   #
   # @example With result handler
@@ -83,29 +95,35 @@ class RactorPool
   # @example Without result handler
   #   pool = RactorPool.new(size: 4, worker: proc { it })
   #
+  # @example With round-robin strategy
+  #   pool = RactorPool.new(size: 4, strategy: :round_robin, worker: proc { it })
+  #
   # @example With error handler
   #   error_count = Atom.new(0)
   #   on_error = proc { error_count.swap { |count| count + 1 } }
   #   pool = RactorPool.new(size: 4, worker: proc { raise }, on_error: on_error)
   #
-  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?, ?on_error: (^(Exception) -> void | nil)) ?{ (untyped) -> void } -> void
-  def initialize(size: Etc.nprocessors, worker:, name: nil, on_error: nil, &result_handler)
+  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?strategy: Symbol, ?name: String?, ?on_error: (^(Exception) -> void | nil)) ?{ (untyped) -> void } -> void
+  def initialize(size: Etc.nprocessors, worker:, strategy: :coordinator, name: nil, on_error: nil, &result_handler)
     raise ArgumentError, "size must be a positive Integer" unless size.is_a?(Integer) && size > 0
     raise ArgumentError, "worker must be a Proc" unless worker.is_a?(Proc)
+    raise ArgumentError, "strategy must be one of #{STRATEGIES.inspect}" unless STRATEGIES.include?(strategy)
     raise ArgumentError, "on_error must be a Proc" if on_error && !on_error.is_a?(Proc)
 
     @size = size
     @worker = Ractor.shareable_proc(&worker)
+    @strategy = strategy
     @name = name
     @on_error = Ractor.shareable_proc(&on_error) if on_error
     @result_handler = result_handler
 
     @in_flight = Atom.new(0)
     @shutdown  = Atom.new(false)
+    @next_worker_index = Atom.new(-1) if size > 1 && strategy == :round_robin
 
     @result_port = Ractor::Port.new if result_handler
     @error_port  = Ractor::Port.new unless on_error
-    @coordinator = start_coordinator if size > 1
+    @coordinator = start_coordinator if size > 1 && strategy == :coordinator
     @workers = start_workers
     @collector = start_collector
     @error_collector = start_error_collector
@@ -132,8 +150,16 @@ class RactorPool
       raise EnqueuedWorkAfterShutdownError
     end
 
+    target = if @coordinator
+               @coordinator
+             elsif @next_worker_index
+               @workers[@next_worker_index.swap { |index| (index + 1) % @size }]
+             else
+               @workers.first
+             end
+
     begin
-      (@coordinator || @workers.first).send(work, move: true)
+      target.send(work, move: true)
     ensure
       @in_flight.swap { |count| count - 1 }
     end
@@ -175,7 +201,7 @@ class RactorPool
       @workers.each(&:join)
       @coordinator.join
     else
-      @workers.first.send(SHUTDOWN, move: true)
+      @workers.each { |worker| worker.send(SHUTDOWN, move: true) }
       @workers.each(&:join)
       @result_port&.send(SHUTDOWN, move: true)
     end

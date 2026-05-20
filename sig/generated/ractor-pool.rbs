@@ -1,10 +1,15 @@
 # Generated from lib/ractor-pool.rb with RBS::Inline
 
-# A thread-safe, lock-free pool of Ractor workers with a coordinator pattern for distributing work.
+# A thread-safe, lock-free pool of Ractor workers with coordinator or round-robin dispatch for distributing work.
 #
 # RactorPool manages a fixed number of worker ractors that process work items in parallel.
-# Work is distributed on-demand to idle workers, ensuring efficient utilisation. Results
-# are collected and passed to a result handler running in a separate thread.
+# The +:coordinator+ strategy (the default) routes each work item to whichever worker is
+# currently idle via a dedicated coordinator Ractor, so a slow item on one worker does not
+# block faster items from being picked up by other workers. Use it when work items have
+# variable cost. The +:round_robin+ strategy dispatches work to workers in turn, so a slow
+# item on one worker queues the next item destined for that worker behind it, even if other
+# workers are idle. Use it when work items have uniform cost. Results are collected and
+# passed to a result handler running in a separate thread.
 #
 # @example Basic usage
 #   results = []
@@ -42,6 +47,8 @@ class RactorPool
     def message: () -> String
   end
 
+  STRATEGIES: untyped
+
   SHUTDOWN: ::Symbol
 
   @error_collector: Thread?
@@ -56,6 +63,8 @@ class RactorPool
 
   @result_port: Ractor::Port?
 
+  @next_worker_index: Atom[Integer]?
+
   @shutdown: Atom[bool]
 
   @in_flight: Atom[Integer]
@@ -66,6 +75,8 @@ class RactorPool
 
   @name: String?
 
+  @strategy: Symbol
+
   @worker: ^(untyped) -> untyped
 
   @size: Integer
@@ -74,12 +85,14 @@ class RactorPool
   #
   # @param size [Integer] number of worker ractors to create
   # @param worker [Proc] a shareable proc that processes each work item
+  # @param strategy [Symbol] dispatch strategy, either +:coordinator+ (the default) or +:round_robin+
   # @param name [String, nil] optional name for the pool, used in thread/ractor names
   # @param on_error [Proc, nil] optional shareable proc called with the raised exception when a worker raises
   # @yieldparam result [Object] the result returned by the worker proc
   # @return [void]
   # @raise [ArgumentError] if size is not a positive integer
   # @raise [ArgumentError] if worker is not a proc
+  # @raise [ArgumentError] if strategy is not +:coordinator+ or +:round_robin+
   # @raise [ArgumentError] if on_error is given but is not a proc
   #
   # @example With result handler
@@ -88,13 +101,16 @@ class RactorPool
   # @example Without result handler
   #   pool = RactorPool.new(size: 4, worker: proc { it })
   #
+  # @example With round-robin strategy
+  #   pool = RactorPool.new(size: 4, strategy: :round_robin, worker: proc { it })
+  #
   # @example With error handler
   #   error_count = Atom.new(0)
   #   on_error = proc { error_count.swap { |count| count + 1 } }
   #   pool = RactorPool.new(size: 4, worker: proc { raise }, on_error: on_error)
   #
-  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?name: String?, ?on_error: (^(Exception) -> void | nil)) ?{ (untyped) -> void } -> void
-  def initialize: (worker: ^(untyped) -> untyped, ?size: Integer, ?name: String?, ?on_error: ^(Exception) -> void | nil) ?{ (untyped) -> void } -> void
+  # @rbs (?size: Integer, worker: ^(untyped) -> untyped, ?strategy: Symbol, ?name: String?, ?on_error: (^(Exception) -> void | nil)) ?{ (untyped) -> void } -> void
+  def initialize: (worker: ^(untyped) -> untyped, ?size: Integer, ?strategy: Symbol, ?name: String?, ?on_error: ^(Exception) -> void | nil) ?{ (untyped) -> void } -> void
 
   # Queues a work item to be processed by an available worker.
   #
