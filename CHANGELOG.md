@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-20
+
 - Add `:round_robin` dispatch strategy
 
 ## [0.3.1] - 2026-05-12
