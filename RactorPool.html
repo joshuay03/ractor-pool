@@ -136,16 +136,6 @@ passed to a result handler running in a separate thread.</p>
 <span class='id identifier rubyid_p'>p</span> <span class='id identifier rubyid_results'>results</span> <span class='comment'>#=&gt; [2, 0, 6, 4, 14, 10, 8, 16, 18, 12]</span></code></pre>
     
       
-        <h5 class="example_title"><div class='inline'><p>Round-robin strategy</p></div></h5>
-      
-      <pre class="example code"><code><span class='id identifier rubyid_results'>results</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
-<span class='id identifier rubyid_worker'>worker</span> <span class='op'>=</span> <span class='tlambda'>-&gt;</span><span class='lparen'>(</span><span class='id identifier rubyid_work'>work</span><span class='rparen'>)</span> <span class='tlambeg'>{</span> <span class='id identifier rubyid_work'>work</span> <span class='op'>*</span> <span class='int'>2</span> <span class='rbrace'>}</span>
-<span class='id identifier rubyid_pool'>pool</span> <span class='op'>=</span> <span class='const'>RactorPool</span><span class='period'>.</span><span class='id identifier rubyid_new'><span class='object_link'><a href="#initialize-instance_method" title="RactorPool#initialize (method)">new</a></span></span><span class='lparen'>(</span><span class='label'>size:</span> <span class='int'>4</span><span class='comma'>,</span> <span class='label'>strategy:</span> <span class='symbol'>:round_robin</span><span class='comma'>,</span> <span class='label'>worker:</span> <span class='id identifier rubyid_worker'>worker</span><span class='rparen'>)</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_result'>result</span><span class='op'>|</span> <span class='id identifier rubyid_results'>results</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_result'>result</span> <span class='rbrace'>}</span>
-
-<span class='int'>10</span><span class='period'>.</span><span class='id identifier rubyid_times'>times</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_index'>index</span><span class='op'>|</span> <span class='id identifier rubyid_pool'>pool</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_index'>index</span> <span class='rbrace'>}</span>
-<span class='id identifier rubyid_pool'>pool</span><span class='period'>.</span><span class='id identifier rubyid_shutdown'>shutdown</span></code></pre>
-    
-      
         <h5 class="example_title"><div class='inline'><p>Without result handler</p></div></h5>
       
       <pre class="example code"><code><span class='id identifier rubyid_counter'>counter</span> <span class='op'>=</span> <span class='const'>Atom</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='int'>0</span><span class='rparen'>)</span>
@@ -195,33 +185,6 @@ passed to a result handler running in a separate thread.</p>
 
     <dl class="constants">
       
-        <dt id="SHUTDOWN-constant" class="">SHUTDOWN =
-          <div class="docstring">
-  <div class="discussion">
-    
-
-  </div>
-</div>
-<div class="tags">
-  
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>::Symbol</tt>)</span>
-      
-      
-      
-    </li>
-  
-</ul>
-
-</div>
-        </dt>
-        <dd><pre class="code"><span class='symbol'>:shutdown</span></pre></dd>
-      
         <dt id="STRATEGIES-constant" class="">STRATEGIES =
           <div class="docstring">
   <div class="discussion">
@@ -248,6 +211,33 @@ passed to a result handler running in a separate thread.</p>
 </div>
         </dt>
         <dd><pre class="code"><span class='qsymbols_beg'>%i[</span><span class='tstring_content'>coordinator</span><span class='words_sep'> </span><span class='tstring_content'>round_robin</span><span class='tstring_end'>]</span></span><span class='period'>.</span><span class='id identifier rubyid_freeze'>freeze</span></pre></dd>
+      
+        <dt id="SHUTDOWN-constant" class="">SHUTDOWN =
+          <div class="docstring">
+  <div class="discussion">
+    
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>::Symbol</tt>)</span>
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div>
+        </dt>
+        <dd><pre class="code"><span class='symbol'>:shutdown</span></pre></dd>
       
         <dt id="VERSION-constant" class="">VERSION =
           <div class="docstring">
@@ -722,6 +712,14 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+107
+108
+109
+110
+111
+112
+113
+114
 115
 116
 117
@@ -737,18 +735,10 @@ passed to a result handler running in a separate thread.</p>
 127
 128
 129
-130
-131
-132
-133
-134
-135
-136
-137
-138</pre>
+130</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 115</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 107</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>size:</span> <span class='const'>Etc</span><span class='period'>.</span><span class='id identifier rubyid_nprocessors'>nprocessors</span><span class='comma'>,</span> <span class='label'>worker:</span><span class='comma'>,</span> <span class='label'>strategy:</span> <span class='symbol'>:coordinator</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>on_error:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_result_handler'>result_handler</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>size must be a positive Integer</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_size'>size</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Integer</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;</span> <span class='int'>0</span>
@@ -853,6 +843,14 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+143
+144
+145
+146
+147
+148
+149
+150
 151
 152
 153
@@ -868,18 +866,10 @@ passed to a result handler running in a separate thread.</p>
 163
 164
 165
-166
-167
-168
-169
-170
-171
-172
-173
-174</pre>
+166</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 151</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 143</span>
 
 <span class='kw'>def</span> <span class='op'>&lt;&lt;</span><span class='lparen'>(</span><span class='id identifier rubyid_work'>work</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="RactorPool/EnqueuedWorkAfterShutdownError.html" title="RactorPool::EnqueuedWorkAfterShutdownError (class)">EnqueuedWorkAfterShutdownError</a></span></span> <span class='kw'>if</span> <span class='ivar'>@shutdown</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -951,6 +941,14 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+185
+186
+187
+188
+189
+190
+191
+192
 193
 194
 195
@@ -969,18 +967,10 @@ passed to a result handler running in a separate thread.</p>
 208
 209
 210
-211
-212
-213
-214
-215
-216
-217
-218
-219</pre>
+211</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 193</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 185</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_shutdown'>shutdown</span>
   <span class='id identifier rubyid_already_shutdown'>already_shutdown</span> <span class='op'>=</span> <span class='kw'>false</span>
@@ -1051,6 +1041,14 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+295
+296
+297
+298
+299
+300
+301
+302
 303
 304
 305
@@ -1059,18 +1057,10 @@ passed to a result handler running in a separate thread.</p>
 308
 309
 310
-311
-312
-313
-314
-315
-316
-317
-318
-319</pre>
+311</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 303</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 295</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start_collector'>start_collector</span>
   <span class='kw'>return</span> <span class='kw'>unless</span> <span class='ivar'>@result_handler</span>
@@ -1131,6 +1121,14 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+216
+217
+218
+219
+220
+221
+222
+223
 224
 225
 226
@@ -1174,18 +1172,10 @@ passed to a result handler running in a separate thread.</p>
 264
 265
 266
-267
-268
-269
-270
-271
-272
-273
-274
-275</pre>
+267</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 224</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 216</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start_coordinator'>start_coordinator</span>
   <span class='id identifier rubyid_ractor_name'>ractor_name</span> <span class='op'>=</span> <span class='const'>String</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> coordinator ractor</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -1281,6 +1271,14 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+314
+315
+316
+317
+318
+319
+320
+321
 322
 323
 324
@@ -1289,18 +1287,10 @@ passed to a result handler running in a separate thread.</p>
 327
 328
 329
-330
-331
-332
-333
-334
-335
-336
-337
-338</pre>
+330</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 322</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 314</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start_error_collector'>start_error_collector</span>
   <span class='kw'>return</span> <span class='kw'>if</span> <span class='ivar'>@on_error</span>
@@ -1361,6 +1351,14 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+270
+271
+272
+273
+274
+275
+276
+277
 278
 279
 280
@@ -1375,18 +1373,10 @@ passed to a result handler running in a separate thread.</p>
 289
 290
 291
-292
-293
-294
-295
-296
-297
-298
-299
-300</pre>
+292</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 278</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 270</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start_workers'>start_workers</span>
   <span class='ivar'>@size</span><span class='period'>.</span><span class='id identifier rubyid_times'>times</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_index'>index</span><span class='op'>|</span>
@@ -1421,7 +1411,7 @@ passed to a result handler running in a separate thread.</p>
 </div>
 
       <div id="footer">
-  Generated on Wed May 20 09:30:31 2026 by
+  Generated on Wed May 20 09:47:24 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.43 (ruby-4.1.0).
 </div>
