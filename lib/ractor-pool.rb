@@ -217,7 +217,12 @@ class RactorPool
     ractor_name = String.new("#{self.class.name} coordinator ractor")
     ractor_name << " for #{@name}" if @name
 
-    Ractor.new(@size, @result_port, name: ractor_name) do |worker_count, result_port|
+    thread_name = String.new("#{self.class.name} coordinator thread")
+    thread_name << " for #{@name}" if @name
+
+    Ractor.new(@size, @result_port, thread_name, name: ractor_name) do |worker_count, result_port, thread_name|
+      Thread.current.name = thread_name
+
       work_queue = []
       waiting_workers = []
       shutdown_received = false
@@ -272,7 +277,12 @@ class RactorPool
       ractor_name = String.new("#{self.class.name} ractor #{index}")
       ractor_name << " for #{@name}" if @name
 
-      Ractor.new(@worker, @on_error, @error_port, @coordinator, @result_port, name: ractor_name) do |worker, on_error, error_port, coordinator, result_port|
+      thread_name = String.new("#{self.class.name} worker thread #{index}")
+      thread_name << " for #{@name}" if @name
+
+      Ractor.new(@worker, @on_error, @error_port, @coordinator, @result_port, thread_name, name: ractor_name) do |worker, on_error, error_port, coordinator, result_port, thread_name|
+        Thread.current.name = thread_name
+
         loop do
           coordinator&.send(Ractor.current, move: true)
 

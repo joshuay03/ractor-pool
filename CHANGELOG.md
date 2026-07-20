@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Name the underlying thread of each worker and coordinator `Ractor`
+
 ## [0.4.0] - 2026-05-20
 
 - Add `:round_robin` dispatch strategy

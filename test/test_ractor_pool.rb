@@ -76,6 +76,20 @@ module RactorPoolStrategyTests
     pool.shutdown
   end
 
+  def test_names_worker_ractor_threads
+    results = []
+    worker = proc { |_work| Thread.current.name }
+    pool = RactorPool.new(size: 2, worker: worker, strategy: strategy, name: self.class.name) { |name| results << name }
+
+    4.times { |index| pool << index }
+    pool.shutdown
+
+    assert_equal [
+      "RactorPool worker thread 0 for #{self.class.name}",
+      "RactorPool worker thread 1 for #{self.class.name}"
+    ], results.uniq.sort
+  end
+
   def test_processes_work_items
     results = []
     worker = ->(work) { work * 2 }
