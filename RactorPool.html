@@ -398,28 +398,6 @@ passed to a result handler running in a separate thread.</p>
         <li class="public ">
   <span class="summary_signature">
     
-      <a href="#start_error_collector-instance_method" title="#start_error_collector (instance method)">#<strong>start_error_collector</strong>  &#x21d2; Thread<sup>?</sup> </a>
-    
-
-    
-  </span>
-  
-  
-  
-  
-  
-  
-  
-
-  
-    <span class="summary_desc"><div class='inline'></div></span>
-  
-</li>
-
-      
-        <li class="public ">
-  <span class="summary_signature">
-    
       <a href="#start_workers-instance_method" title="#start_workers (instance method)">#<strong>start_workers</strong>  &#x21d2; Array[Ractor] </a>
     
 
@@ -712,7 +690,6 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
-107
 108
 109
 110
@@ -734,11 +711,10 @@ passed to a result handler running in a separate thread.</p>
 126
 127
 128
-129
-130</pre>
+129</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 107</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 108</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_initialize'>initialize</span><span class='lparen'>(</span><span class='label'>size:</span> <span class='const'>Etc</span><span class='period'>.</span><span class='id identifier rubyid_nprocessors'>nprocessors</span><span class='comma'>,</span> <span class='label'>worker:</span><span class='comma'>,</span> <span class='label'>strategy:</span> <span class='symbol'>:coordinator</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='label'>on_error:</span> <span class='kw'>nil</span><span class='comma'>,</span> <span class='op'>&amp;</span><span class='id identifier rubyid_result_handler'>result_handler</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'>ArgumentError</span><span class='comma'>,</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>size must be a positive Integer</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_size'>size</span><span class='period'>.</span><span class='id identifier rubyid_is_a?'>is_a?</span><span class='lparen'>(</span><span class='const'>Integer</span><span class='rparen'>)</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;</span> <span class='int'>0</span>
@@ -757,12 +733,10 @@ passed to a result handler running in a separate thread.</p>
   <span class='ivar'>@shutdown</span>  <span class='op'>=</span> <span class='const'>Atom</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='kw'>false</span><span class='rparen'>)</span>
   <span class='ivar'>@next_worker_index</span> <span class='op'>=</span> <span class='const'>Atom</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='op'>-</span><span class='int'>1</span><span class='rparen'>)</span> <span class='kw'>if</span> <span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;</span> <span class='int'>1</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_strategy'>strategy</span> <span class='op'>==</span> <span class='symbol'>:round_robin</span>
 
-  <span class='ivar'>@result_port</span> <span class='op'>=</span> <span class='const'>Ractor</span><span class='op'>::</span><span class='const'>Port</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='kw'>if</span> <span class='id identifier rubyid_result_handler'>result_handler</span>
-  <span class='ivar'>@error_port</span>  <span class='op'>=</span> <span class='const'>Ractor</span><span class='op'>::</span><span class='const'>Port</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='kw'>unless</span> <span class='id identifier rubyid_on_error'>on_error</span>
+  <span class='ivar'>@collector_port</span> <span class='op'>=</span> <span class='const'>Ractor</span><span class='op'>::</span><span class='const'>Port</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span> <span class='kw'>if</span> <span class='id identifier rubyid_result_handler'>result_handler</span> <span class='op'>||</span> <span class='op'>!</span><span class='id identifier rubyid_on_error'>on_error</span>
   <span class='ivar'>@coordinator</span> <span class='op'>=</span> <span class='id identifier rubyid_start_coordinator'>start_coordinator</span> <span class='kw'>if</span> <span class='id identifier rubyid_size'>size</span> <span class='op'>&gt;</span> <span class='int'>1</span> <span class='op'>&amp;&amp;</span> <span class='id identifier rubyid_strategy'>strategy</span> <span class='op'>==</span> <span class='symbol'>:coordinator</span>
   <span class='ivar'>@workers</span> <span class='op'>=</span> <span class='id identifier rubyid_start_workers'>start_workers</span>
   <span class='ivar'>@collector</span> <span class='op'>=</span> <span class='id identifier rubyid_start_collector'>start_collector</span>
-  <span class='ivar'>@error_collector</span> <span class='op'>=</span> <span class='id identifier rubyid_start_error_collector'>start_error_collector</span>
 <span class='kw'>end</span></pre>
     </td>
   </tr>
@@ -843,6 +817,7 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+142
 143
 144
 145
@@ -865,11 +840,10 @@ passed to a result handler running in a separate thread.</p>
 162
 163
 164
-165
-166</pre>
+165</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 143</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 142</span>
 
 <span class='kw'>def</span> <span class='op'>&lt;&lt;</span><span class='lparen'>(</span><span class='id identifier rubyid_work'>work</span><span class='rparen'>)</span>
   <span class='id identifier rubyid_raise'>raise</span> <span class='const'><span class='object_link'><a href="RactorPool/EnqueuedWorkAfterShutdownError.html" title="RactorPool::EnqueuedWorkAfterShutdownError (class)">EnqueuedWorkAfterShutdownError</a></span></span> <span class='kw'>if</span> <span class='ivar'>@shutdown</span><span class='period'>.</span><span class='id identifier rubyid_value'>value</span>
@@ -941,6 +915,7 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+184
 185
 186
 187
@@ -964,13 +939,10 @@ passed to a result handler running in a separate thread.</p>
 205
 206
 207
-208
-209
-210
-211</pre>
+208</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 185</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 184</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_shutdown'>shutdown</span>
   <span class='id identifier rubyid_already_shutdown'>already_shutdown</span> <span class='op'>=</span> <span class='kw'>false</span>
@@ -993,10 +965,8 @@ passed to a result handler running in a separate thread.</p>
   <span class='kw'>else</span>
     <span class='ivar'>@workers</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_worker'>worker</span><span class='op'>|</span> <span class='id identifier rubyid_worker'>worker</span><span class='period'>.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
     <span class='ivar'>@workers</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span><span class='lparen'>(</span><span class='op'>&amp;</span><span class='symbol'>:join</span><span class='rparen'>)</span>
-    <span class='ivar'>@result_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+    <span class='ivar'>@collector_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
   <span class='kw'>end</span>
-  <span class='ivar'>@error_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
-  <span class='ivar'>@error_collector</span><span class='op'>&amp;.</span><span class='id identifier rubyid_join'>join</span>
   <span class='ivar'>@collector</span><span class='op'>&amp;.</span><span class='id identifier rubyid_join'>join</span>
 <span class='kw'>end</span></pre>
     </td>
@@ -1057,25 +1027,33 @@ passed to a result handler running in a separate thread.</p>
 318
 319
 320
-321</pre>
+321
+322
+323
+324
+325</pre>
     </td>
     <td>
       <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 305</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start_collector'>start_collector</span>
-  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='ivar'>@result_handler</span>
+  <span class='kw'>return</span> <span class='kw'>unless</span> <span class='ivar'>@collector_port</span>
 
   <span class='id identifier rubyid_thread_name'>thread_name</span> <span class='op'>=</span> <span class='const'>String</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> collector thread</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='id identifier rubyid_thread_name'>thread_name</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='ivar'>@name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@name</span>
 
-  <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@result_port</span><span class='comma'>,</span> <span class='ivar'>@result_handler</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_result_port'>result_port</span><span class='comma'>,</span> <span class='id identifier rubyid_result_handler'>result_handler</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='op'>|</span>
+  <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@collector_port</span><span class='comma'>,</span> <span class='ivar'>@result_handler</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_collector_port'>collector_port</span><span class='comma'>,</span> <span class='id identifier rubyid_result_handler'>result_handler</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='op'>|</span>
     <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_name'>name</span>
 
     <span class='id identifier rubyid_loop'>loop</span> <span class='kw'>do</span>
-      <span class='id identifier rubyid_result'>result</span> <span class='op'>=</span> <span class='id identifier rubyid_result_port'>result_port</span><span class='period'>.</span><span class='id identifier rubyid_receive'>receive</span>
-      <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_result'>result</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span>
-
-      <span class='id identifier rubyid_result_handler'>result_handler</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='rparen'>)</span>
+      <span class='kw'>case</span> <span class='id identifier rubyid_message'>message</span> <span class='op'>=</span> <span class='id identifier rubyid_collector_port'>collector_port</span><span class='period'>.</span><span class='id identifier rubyid_receive'>receive</span>
+      <span class='kw'>when</span> <span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span>
+        <span class='kw'>break</span>
+      <span class='kw'>when</span> <span class='const'>WorkerError</span>
+        <span class='id identifier rubyid_warn'>warn</span> <span class='id identifier rubyid_message'>message</span><span class='period'>.</span><span class='id identifier rubyid_full_message'>full_message</span>
+      <span class='kw'>else</span>
+        <span class='id identifier rubyid_result_handler'>result_handler</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_message'>message</span><span class='rparen'>)</span>
+      <span class='kw'>end</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
@@ -1121,6 +1099,9 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+213
+214
+215
 216
 217
 218
@@ -1174,13 +1155,10 @@ passed to a result handler running in a separate thread.</p>
 266
 267
 268
-269
-270
-271
-272</pre>
+269</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 216</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 213</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start_coordinator'>start_coordinator</span>
   <span class='id identifier rubyid_ractor_name'>ractor_name</span> <span class='op'>=</span> <span class='const'>String</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> coordinator ractor</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
@@ -1189,7 +1167,7 @@ passed to a result handler running in a separate thread.</p>
   <span class='id identifier rubyid_thread_name'>thread_name</span> <span class='op'>=</span> <span class='const'>String</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> coordinator thread</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
   <span class='id identifier rubyid_thread_name'>thread_name</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='ivar'>@name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@name</span>
 
-  <span class='const'>Ractor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@size</span><span class='comma'>,</span> <span class='ivar'>@result_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='id identifier rubyid_ractor_name'>ractor_name</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_worker_count'>worker_count</span><span class='comma'>,</span> <span class='id identifier rubyid_result_port'>result_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='op'>|</span>
+  <span class='const'>Ractor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@size</span><span class='comma'>,</span> <span class='ivar'>@collector_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='id identifier rubyid_ractor_name'>ractor_name</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_worker_count'>worker_count</span><span class='comma'>,</span> <span class='id identifier rubyid_collector_port'>collector_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='op'>|</span>
     <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_thread_name'>thread_name</span>
 
     <span class='id identifier rubyid_work_queue'>work_queue</span> <span class='op'>=</span> <span class='lbracket'>[</span><span class='rbracket'>]</span>
@@ -1206,7 +1184,7 @@ passed to a result handler running in a separate thread.</p>
         <span class='id identifier rubyid_waiting_workers'>waiting_workers</span><span class='period'>.</span><span class='id identifier rubyid_each'>each</span> <span class='lbrace'>{</span> <span class='op'>|</span><span class='id identifier rubyid_worker'>worker</span><span class='op'>|</span> <span class='id identifier rubyid_worker'>worker</span><span class='period'>.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span> <span class='rbrace'>}</span>
         <span class='id identifier rubyid_waiting_workers'>waiting_workers</span><span class='period'>.</span><span class='id identifier rubyid_clear'>clear</span>
         <span class='kw'>if</span> <span class='id identifier rubyid_workers_finished'>workers_finished</span> <span class='op'>==</span> <span class='id identifier rubyid_worker_count'>worker_count</span>
-          <span class='id identifier rubyid_result_port'>result_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_collector_port'>collector_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
           <span class='kw'>break</span>
         <span class='kw'>end</span>
 
@@ -1220,7 +1198,7 @@ passed to a result handler running in a separate thread.</p>
 
           <span class='id identifier rubyid_workers_finished'>workers_finished</span> <span class='op'>+=</span> <span class='int'>1</span>
           <span class='kw'>if</span> <span class='id identifier rubyid_workers_finished'>workers_finished</span> <span class='op'>==</span> <span class='id identifier rubyid_worker_count'>worker_count</span>
-            <span class='id identifier rubyid_result_port'>result_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+            <span class='id identifier rubyid_collector_port'>collector_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
             <span class='kw'>break</span>
           <span class='kw'>end</span>
         <span class='kw'>else</span>
@@ -1236,86 +1214,6 @@ passed to a result handler running in a separate thread.</p>
           <span class='id identifier rubyid_work_queue'>work_queue</span> <span class='op'>&lt;&lt;</span> <span class='id identifier rubyid_work'>work</span>
         <span class='kw'>end</span>
       <span class='kw'>end</span>
-    <span class='kw'>end</span>
-  <span class='kw'>end</span>
-<span class='kw'>end</span></pre>
-    </td>
-  </tr>
-</table>
-</div>
-    
-      <div class="method_details ">
-  <h3 class="signature " id="start_error_collector-instance_method">
-  
-    #<strong>start_error_collector</strong>  &#x21d2; <tt>Thread</tt><sup>?</sup> 
-  
-
-  
-
-  
-</h3><div class="docstring">
-  <div class="discussion">
-    
-
-  </div>
-</div>
-<div class="tags">
-  
-<p class="tag_title">Returns:</p>
-<ul class="return">
-  
-    <li>
-      
-      
-        <span class='type'>(<tt>Thread</tt>, <tt>nil</tt>)</span>
-      
-      
-      
-    </li>
-  
-</ul>
-
-</div><table class="source_code">
-  <tr>
-    <td>
-      <pre class="lines">
-
-
-324
-325
-326
-327
-328
-329
-330
-331
-332
-333
-334
-335
-336
-337
-338
-339
-340</pre>
-    </td>
-    <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 324</span>
-
-<span class='kw'>def</span> <span class='id identifier rubyid_start_error_collector'>start_error_collector</span>
-  <span class='kw'>return</span> <span class='kw'>if</span> <span class='ivar'>@on_error</span>
-
-  <span class='id identifier rubyid_thread_name'>thread_name</span> <span class='op'>=</span> <span class='const'>String</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> error collector thread</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
-  <span class='id identifier rubyid_thread_name'>thread_name</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='ivar'>@name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@name</span>
-
-  <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@error_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_error_port'>error_port</span><span class='comma'>,</span> <span class='id identifier rubyid_name'>name</span><span class='op'>|</span>
-    <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_name'>name</span>
-
-    <span class='id identifier rubyid_loop'>loop</span> <span class='kw'>do</span>
-      <span class='id identifier rubyid_message'>message</span> <span class='op'>=</span> <span class='id identifier rubyid_error_port'>error_port</span><span class='period'>.</span><span class='id identifier rubyid_receive'>receive</span>
-      <span class='kw'>break</span> <span class='kw'>if</span> <span class='id identifier rubyid_message'>message</span> <span class='op'>==</span> <span class='const'><span class='object_link'><a href="#SHUTDOWN-constant" title="RactorPool::SHUTDOWN (constant)">SHUTDOWN</a></span></span>
-
-      <span class='id identifier rubyid_warn'>warn</span> <span class='id identifier rubyid_message'>message</span>
     <span class='kw'>end</span>
   <span class='kw'>end</span>
 <span class='kw'>end</span></pre>
@@ -1361,6 +1259,9 @@ passed to a result handler running in a separate thread.</p>
       <pre class="lines">
 
 
+272
+273
+274
 275
 276
 277
@@ -1391,9 +1292,12 @@ passed to a result handler running in a separate thread.</p>
 302</pre>
     </td>
     <td>
-      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 275</span>
+      <pre class="code"><span class="info file"># File 'lib/ractor-pool.rb', line 272</span>
 
 <span class='kw'>def</span> <span class='id identifier rubyid_start_workers'>start_workers</span>
+  <span class='id identifier rubyid_result_port'>result_port</span> <span class='op'>=</span> <span class='ivar'>@collector_port</span> <span class='kw'>if</span> <span class='ivar'>@result_handler</span>
+  <span class='id identifier rubyid_error_port'>error_port</span> <span class='op'>=</span> <span class='ivar'>@collector_port</span> <span class='kw'>unless</span> <span class='ivar'>@on_error</span>
+
   <span class='ivar'>@size</span><span class='period'>.</span><span class='id identifier rubyid_times'>times</span><span class='period'>.</span><span class='id identifier rubyid_map'>map</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_index'>index</span><span class='op'>|</span>
     <span class='id identifier rubyid_ractor_name'>ractor_name</span> <span class='op'>=</span> <span class='const'>String</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> ractor </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_index'>index</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
     <span class='id identifier rubyid_ractor_name'>ractor_name</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='ivar'>@name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@name</span>
@@ -1401,7 +1305,7 @@ passed to a result handler running in a separate thread.</p>
     <span class='id identifier rubyid_thread_name'>thread_name</span> <span class='op'>=</span> <span class='const'>String</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='embexpr_beg'>#{</span><span class='kw'>self</span><span class='period'>.</span><span class='id identifier rubyid_class'>class</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span><span class='embexpr_end'>}</span><span class='tstring_content'> worker thread </span><span class='embexpr_beg'>#{</span><span class='id identifier rubyid_index'>index</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span><span class='rparen'>)</span>
     <span class='id identifier rubyid_thread_name'>thread_name</span> <span class='op'>&lt;&lt;</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'> for </span><span class='embexpr_beg'>#{</span><span class='ivar'>@name</span><span class='embexpr_end'>}</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>if</span> <span class='ivar'>@name</span>
 
-    <span class='const'>Ractor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@worker</span><span class='comma'>,</span> <span class='ivar'>@on_error</span><span class='comma'>,</span> <span class='ivar'>@error_port</span><span class='comma'>,</span> <span class='ivar'>@coordinator</span><span class='comma'>,</span> <span class='ivar'>@result_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='id identifier rubyid_ractor_name'>ractor_name</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_worker'>worker</span><span class='comma'>,</span> <span class='id identifier rubyid_on_error'>on_error</span><span class='comma'>,</span> <span class='id identifier rubyid_error_port'>error_port</span><span class='comma'>,</span> <span class='id identifier rubyid_coordinator'>coordinator</span><span class='comma'>,</span> <span class='id identifier rubyid_result_port'>result_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='op'>|</span>
+    <span class='const'>Ractor</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='ivar'>@worker</span><span class='comma'>,</span> <span class='ivar'>@on_error</span><span class='comma'>,</span> <span class='id identifier rubyid_error_port'>error_port</span><span class='comma'>,</span> <span class='ivar'>@coordinator</span><span class='comma'>,</span> <span class='id identifier rubyid_result_port'>result_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='comma'>,</span> <span class='label'>name:</span> <span class='id identifier rubyid_ractor_name'>ractor_name</span><span class='rparen'>)</span> <span class='kw'>do</span> <span class='op'>|</span><span class='id identifier rubyid_worker'>worker</span><span class='comma'>,</span> <span class='id identifier rubyid_on_error'>on_error</span><span class='comma'>,</span> <span class='id identifier rubyid_error_port'>error_port</span><span class='comma'>,</span> <span class='id identifier rubyid_coordinator'>coordinator</span><span class='comma'>,</span> <span class='id identifier rubyid_result_port'>result_port</span><span class='comma'>,</span> <span class='id identifier rubyid_thread_name'>thread_name</span><span class='op'>|</span>
       <span class='const'>Thread</span><span class='period'>.</span><span class='id identifier rubyid_current'>current</span><span class='period'>.</span><span class='id identifier rubyid_name'>name</span> <span class='op'>=</span> <span class='id identifier rubyid_thread_name'>thread_name</span>
 
       <span class='id identifier rubyid_loop'>loop</span> <span class='kw'>do</span>
@@ -1415,7 +1319,7 @@ passed to a result handler running in a separate thread.</p>
 
           <span class='id identifier rubyid_result_port'>result_port</span><span class='op'>&amp;.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='id identifier rubyid_result'>result</span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
         <span class='kw'>rescue</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_error'>error</span>
-          <span class='id identifier rubyid_on_error'>on_error</span> <span class='op'>?</span> <span class='id identifier rubyid_on_error'>on_error</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_error'>error</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_error_port'>error_port</span><span class='period'>.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='id identifier rubyid_error'>error</span><span class='period'>.</span><span class='id identifier rubyid_full_message'>full_message</span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
+          <span class='id identifier rubyid_on_error'>on_error</span> <span class='op'>?</span> <span class='id identifier rubyid_on_error'>on_error</span><span class='period'>.</span><span class='id identifier rubyid_call'>call</span><span class='lparen'>(</span><span class='id identifier rubyid_error'>error</span><span class='rparen'>)</span> <span class='op'>:</span> <span class='id identifier rubyid_error_port'>error_port</span><span class='period'>.</span><span class='id identifier rubyid_send'>send</span><span class='lparen'>(</span><span class='const'>WorkerError</span><span class='period'>.</span><span class='id identifier rubyid_new'>new</span><span class='lparen'>(</span><span class='label'>full_message:</span> <span class='id identifier rubyid_error'>error</span><span class='period'>.</span><span class='id identifier rubyid_full_message'>full_message</span><span class='rparen'>)</span><span class='comma'>,</span> <span class='label'>move:</span> <span class='kw'>true</span><span class='rparen'>)</span>
         <span class='kw'>end</span>
       <span class='kw'>end</span>
     <span class='kw'>end</span>
@@ -1431,7 +1335,7 @@ passed to a result handler running in a separate thread.</p>
 </div>
 
       <div id="footer">
-  Generated on Mon Jul 20 07:57:31 2026 by
+  Generated on Sun Oct 18 03:42:38 2026 by
   <a href="https://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.9.45 (ruby-4.1.0).
 </div>
