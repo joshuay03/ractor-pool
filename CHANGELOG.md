@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.4.2] - 2026-10-18
+
 - Collect worker results and errors on one thread
 
 ## [0.4.1] - 2026-07-20
