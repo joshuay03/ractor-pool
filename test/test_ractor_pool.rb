@@ -40,11 +40,8 @@ module RactorPoolStrategyTests
     assert_equal expected_default_ractor_count, Ractor.count
     main_thread = Thread.current
     threads = Thread.list.select { it == main_thread || it.name }
-    assert_equal 1 + 2, threads.size # main thread, error collector thread, collector thread
-    assert_equal [
-      "RactorPool collector thread for #{self.class.name}",
-      "RactorPool error collector thread for #{self.class.name}"
-    ], threads.select(&:name).map(&:name).sort
+    assert_equal 1 + 1, threads.size # main thread, collector thread
+    assert_equal ["RactorPool collector thread for #{self.class.name}"], threads.select(&:name).map(&:name)
     pool.shutdown
   end
 
@@ -54,11 +51,8 @@ module RactorPoolStrategyTests
     assert_equal 1 + 1, Ractor.count # main ractor, worker ractor
     main_thread = Thread.current
     threads = Thread.list.select { it == main_thread || it.name }
-    assert_equal 1 + 2, threads.size # main thread, error collector thread, collector thread
-    assert_equal [
-      "RactorPool collector thread for #{self.class.name}",
-      "RactorPool error collector thread for #{self.class.name}"
-    ], threads.select(&:name).map(&:name).sort
+    assert_equal 1 + 1, threads.size # main thread, collector thread
+    assert_equal ["RactorPool collector thread for #{self.class.name}"], threads.select(&:name).map(&:name)
     pool.shutdown
   end
 
@@ -68,11 +62,8 @@ module RactorPoolStrategyTests
     assert_equal expected_size_two_ractor_count, Ractor.count
     main_thread = Thread.current
     threads = Thread.list.select { it == main_thread || it.name }
-    assert_equal 1 + 2, threads.size # main thread, error collector thread, collector thread
-    assert_equal [
-      "RactorPool collector thread for #{self.class.name}",
-      "RactorPool error collector thread for #{self.class.name}"
-    ], threads.select(&:name).map(&:name).sort
+    assert_equal 1 + 1, threads.size # main thread, collector thread
+    assert_equal ["RactorPool collector thread for #{self.class.name}"], threads.select(&:name).map(&:name)
     pool.shutdown
   end
 

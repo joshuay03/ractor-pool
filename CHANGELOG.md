@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Collect worker results and errors on one thread
+
 ## [0.4.1] - 2026-07-20
 
 - Name the underlying thread of each worker and coordinator `Ractor`

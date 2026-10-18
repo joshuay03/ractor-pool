@@ -51,7 +51,16 @@ class RactorPool
 
   SHUTDOWN: ::Symbol
 
-  @error_collector: Thread?
+  class WorkerError < Data
+    attr_reader full_message(): untyped
+
+    def self.new: (untyped full_message) -> instance
+                | (full_message: untyped) -> instance
+
+    def self.members: () -> [ :full_message ]
+
+    def members: () -> [ :full_message ]
+  end
 
   @collector: Thread?
 
@@ -59,9 +68,7 @@ class RactorPool
 
   @coordinator: Ractor?
 
-  @error_port: Ractor::Port?
-
-  @result_port: Ractor::Port?
+  @collector_port: Ractor::Port?
 
   @next_worker_index: Atom[Integer]?
 
@@ -154,7 +161,4 @@ class RactorPool
 
   # @rbs () -> Thread?
   def start_collector: () -> Thread?
-
-  # @rbs () -> Thread?
-  def start_error_collector: () -> Thread?
 end

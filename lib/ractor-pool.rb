@@ -59,6 +59,9 @@ class RactorPool
   SHUTDOWN = :shutdown
   private_constant :SHUTDOWN
 
+  WorkerError = Data.define(:full_message)
+  private_constant :WorkerError
+
   # @rbs @size: Integer
   # @rbs @worker: ^(untyped) -> untyped
   # @rbs @strategy: Symbol
@@ -68,12 +71,10 @@ class RactorPool
   # @rbs @in_flight: Atom[Integer]
   # @rbs @shutdown: Atom[bool]
   # @rbs @next_worker_index: Atom[Integer]?
-  # @rbs @result_port: Ractor::Port?
-  # @rbs @error_port: Ractor::Port?
+  # @rbs @collector_port: Ractor::Port?
   # @rbs @coordinator: Ractor?
   # @rbs @workers: Array[Ractor]
   # @rbs @collector: Thread?
-  # @rbs @error_collector: Thread?
 
   # Creates a new RactorPool with the specified number of workers.
   #
@@ -121,12 +122,10 @@ class RactorPool
     @shutdown  = Atom.new(false)
     @next_worker_index = Atom.new(-1) if size > 1 && strategy == :round_robin
 
-    @result_port = Ractor::Port.new if result_handler
-    @error_port  = Ractor::Port.new unless on_error
+    @collector_port = Ractor::Port.new if result_handler || !on_error
     @coordinator = start_coordinator if size > 1 && strategy == :coordinator
     @workers = start_workers
     @collector = start_collector
-    @error_collector = start_error_collector
   end
 
   # Queues a work item to be processed by an available worker.
@@ -203,10 +202,8 @@ class RactorPool
     else
       @workers.each { |worker| worker.send(SHUTDOWN, move: true) }
       @workers.each(&:join)
-      @result_port&.send(SHUTDOWN, move: true)
+      @collector_port&.send(SHUTDOWN, move: true)
     end
-    @error_port&.send(SHUTDOWN, move: true)
-    @error_collector&.join
     @collector&.join
   end
 
@@ -220,7 +217,7 @@ class RactorPool
     thread_name = String.new("#{self.class.name} coordinator thread")
     thread_name << " for #{@name}" if @name
 
-    Ractor.new(@size, @result_port, thread_name, name: ractor_name) do |worker_count, result_port, thread_name|
+    Ractor.new(@size, @collector_port, thread_name, name: ractor_name) do |worker_count, collector_port, thread_name|
       Thread.current.name = thread_name
 
       work_queue = []
@@ -237,7 +234,7 @@ class RactorPool
           waiting_workers.each { |worker| worker.send(SHUTDOWN, move: true) }
           waiting_workers.clear
           if workers_finished == worker_count
-            result_port&.send(SHUTDOWN, move: true)
+            collector_port&.send(SHUTDOWN, move: true)
             break
           end
 
@@ -251,7 +248,7 @@ class RactorPool
 
             workers_finished += 1
             if workers_finished == worker_count
-              result_port&.send(SHUTDOWN, move: true)
+              collector_port&.send(SHUTDOWN, move: true)
               break
             end
           else
@@ -273,6 +270,9 @@ class RactorPool
 
   # @rbs () -> Array[Ractor]
   def start_workers
+    result_port = @collector_port if @result_handler
+    error_port = @collector_port unless @on_error
+
     @size.times.map do |index|
       ractor_name = String.new("#{self.class.name} ractor #{index}")
       ractor_name << " for #{@name}" if @name
@@ -280,7 +280,7 @@ class RactorPool
       thread_name = String.new("#{self.class.name} worker thread #{index}")
       thread_name << " for #{@name}" if @name
 
-      Ractor.new(@worker, @on_error, @error_port, @coordinator, @result_port, thread_name, name: ractor_name) do |worker, on_error, error_port, coordinator, result_port, thread_name|
+      Ractor.new(@worker, @on_error, error_port, @coordinator, result_port, thread_name, name: ractor_name) do |worker, on_error, error_port, coordinator, result_port, thread_name|
         Thread.current.name = thread_name
 
         loop do
@@ -294,7 +294,7 @@ class RactorPool
 
             result_port&.send(result, move: true)
           rescue => error
-            on_error ? on_error.call(error) : error_port.send(error.full_message, move: true)
+            on_error ? on_error.call(error) : error_port.send(WorkerError.new(full_message: error.full_message), move: true)
           end
         end
       end
@@ -303,38 +303,23 @@ class RactorPool
 
   # @rbs () -> Thread?
   def start_collector
-    return unless @result_handler
+    return unless @collector_port
 
     thread_name = String.new("#{self.class.name} collector thread")
     thread_name << " for #{@name}" if @name
 
-    Thread.new(@result_port, @result_handler, thread_name) do |result_port, result_handler, name|
+    Thread.new(@collector_port, @result_handler, thread_name) do |collector_port, result_handler, name|
       Thread.current.name = name
 
       loop do
-        result = result_port.receive
-        break if result == SHUTDOWN
-
-        result_handler.call(result)
-      end
-    end
-  end
-
-  # @rbs () -> Thread?
-  def start_error_collector
-    return if @on_error
-
-    thread_name = String.new("#{self.class.name} error collector thread")
-    thread_name << " for #{@name}" if @name
-
-    Thread.new(@error_port, thread_name) do |error_port, name|
-      Thread.current.name = name
-
-      loop do
-        message = error_port.receive
-        break if message == SHUTDOWN
-
-        warn message
+        case message = collector_port.receive
+        when SHUTDOWN
+          break
+        when WorkerError
+          warn message.full_message
+        else
+          result_handler.call(message)
+        end
       end
     end
   end
